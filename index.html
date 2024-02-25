@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Chatbot</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-10">
+        <h1 class="text-3xl font-semibold text-center mb-8">Fitness Chatbot</h1>
+        <div id="chat-history" class="max-w-lg mx-auto">
+            {% for message in messages %}
+                <p class="mb-2 "><span class="font-semibold">{{ message.role }}:</span> {{ message.content }}</p>
+            {% endfor %}
+        </div>
+<form id="user-input-form" class="max-w-lg mx-auto mt-6" method="POST" action="/chat">
+    <label for="user_input" class="block mb-2">User Input:</label>
+    <input type="text" id="user_input" name="user_input" class="w-full border border-gray-300 rounded-md py-2 px-3 mb-4">
+    <input type="submit" value="Submit" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+</form>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/chat', {
+                method: 'POST',
+                body: new FormData(),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('chat-history').innerHTML += `<p>Chatbot: ${data.message}</p>`;
+                if (data.message.includes("What is your fitness goal?")) {
+                    document.getElementById('user_input').style.display = 'none';
+                    // Display dropdown menu for fitness goal
+                    document.getElementById('fitness-goal').style.display = 'block';
+                }
+            });
+        });
+
+        document.getElementById('user-input-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            fetch('/chat', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('chat-history').innerHTML += `<p>User: ${formData.get('user_input')}</p>`;
+                document.getElementById('chat-history').innerHTML += `<p>Chatbot: ${data.message}</p>`;
+                if (data.message === "End of conversation") {
+                    document.getElementById('user_input').style.display = 'none';
+                }
+            });
+            document.getElementById('user_input').value = '';
+        });
+    </script>
+
+    <div id="fitness-goal" style="display: none;">
+        <p>What is your fitness goal?</p>
+        <select id="goal" name="goal">
+            <option value="Strength gaining">Strength gaining</option>
+            <option value="Muscle building">Muscle building</option>
+            <option value="Weight loss">Weight loss</option>
+        </select><br>
+        <button onclick="sendGoal()">Submit</button>
+    </div>
+</body>
+</html>
